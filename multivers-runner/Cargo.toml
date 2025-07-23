@@ -11,7 +11,7 @@ repository.workspace = true
 
 [dependencies]
 cfg-if = "1"
-std_detect = { git = "https://github.com/rust-lang/rust.git" }
+std_detect = { git = "https://github.com/rust-lang/stdarch.git", rev = "648061c6c05953f9e466b2572c2a64e12a6a7e35" }
 proc-exit = "2"
 qbsdiff = "1.4.0"
 bzip2 = { version = "0.5", features = ["static"] }

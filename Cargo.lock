@@ -12,15 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "alloc"
-version = "0.0.0"
-source = "git+https://github.com/rust-lang/rust.git#4ff3fa01cbdd468851b1b859541ee1c648cde7de"
-dependencies = [
- "compiler_builtins",
- "core",
-]
-
-[[package]]
 name = "anstream"
 version = "0.6.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -294,14 +285,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
-name = "compiler_builtins"
-version = "0.1.160"
-source = "git+https://github.com/rust-lang/rust.git#4ff3fa01cbdd468851b1b859541ee1c648cde7de"
-dependencies = [
- "core",
-]
-
-[[package]]
 name = "console"
 version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -313,11 +296,6 @@ dependencies = [
  "unicode-width",
  "windows-sys 0.59.0",
 ]
-
-[[package]]
-name = "core"
-version = "0.0.0"
-source = "git+https://github.com/rust-lang/rust.git#4ff3fa01cbdd468851b1b859541ee1c648cde7de"
 
 [[package]]
 name = "cpufeatures"
@@ -810,11 +788,10 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 [[package]]
 name = "std_detect"
 version = "0.1.5"
-source = "git+https://github.com/rust-lang/rust.git#4ff3fa01cbdd468851b1b859541ee1c648cde7de"
+source = "git+https://github.com/rust-lang/stdarch.git?rev=648061c6c05953f9e466b2572c2a64e12a6a7e35#648061c6c05953f9e466b2572c2a64e12a6a7e35"
 dependencies = [
- "alloc",
  "cfg-if",
- "core",
+ "libc",
 ]
 
 [[package]]
