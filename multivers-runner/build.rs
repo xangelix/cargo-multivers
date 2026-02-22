@@ -157,6 +157,47 @@ impl BuildsDescription {
             ))
         })?;
 
+        let out_dir_env = std::env::var_os("OUT_DIR").unwrap();
+        let out_dir = Path::new(&out_dir_env);
+
+        let dlls_code = std::env::var("MULTIVERS_EMBED_DLLS_DIR").map_or_else(
+            |_| {
+                quote! {
+                    pub const BUNDLED_DLLS: &[(&'static str, &'static [u8])] = &[];
+                }
+            },
+            |dlls_dir| {
+                let mut dlls = Vec::new();
+                let dir = Path::new(&dlls_dir);
+                if dir.exists() {
+                    for entry in std::fs::read_dir(dir).unwrap() {
+                        let entry = entry.unwrap();
+                        let path = entry.path();
+                        if path.extension().and_then(|s| s.to_str()) == Some("dll") {
+                            let filename = path.file_name().unwrap().to_str().unwrap().to_owned();
+                            let dll_bytes = std::fs::read(&path).unwrap();
+                            let compressed = compress(&dll_bytes[..]).unwrap();
+
+                            let dest_path = out_dir.join(&filename);
+                            std::fs::write(&dest_path, &compressed).unwrap();
+
+                            dlls.push(quote! {
+                            (
+                                #filename,
+                                include_bytes!(concat!(env!("OUT_DIR"), "/", #filename)).as_slice()
+                            )
+                        });
+                        }
+                    }
+                }
+                quote! {
+                    pub const BUNDLED_DLLS: &[(&'static str, &'static [u8])] = &[
+                        #(#dlls),*
+                    ];
+                }
+            },
+        );
+
         let n_builds = patches.len();
         let tokens = quote! {
             const SOURCE: Build<'_> = Build {
@@ -169,6 +210,8 @@ impl BuildsDescription {
             const PATCHES: [Build<'_>; #n_builds] = [
                 #(#patches),*
             ];
+
+            #dlls_code
         };
 
         std::fs::write(dest_path, tokens.to_string()).map_err(|_| {
