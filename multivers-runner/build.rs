@@ -130,7 +130,7 @@ impl BuildsDescription {
                     proc_exit::sysexits::IO_ERR
                         .with_message(format!("Failed to read build {}", build.path.display()))
                 })?;
-                let patch = gdelta_lz4(&source, &target)?;
+                let patch = gdelta_compress(&source, &target)?;
                 let features: Vec<String> = build
                     .features
                     .into_iter()
@@ -239,7 +239,15 @@ impl BuildsDescription {
 }
 
 fn compress(mut reader: impl Read) -> Result<Vec<u8>, Exit> {
-    let mut encoder = lz4_flex::frame::FrameEncoder::new(Vec::new());
+    // Allows setting a custom ZSTD compression level through the environment, defaulting to 15.
+    let level: i32 = std::env::var("MULTIVERS_ZSTD_LEVEL")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(15);
+
+    let mut encoder = zstd::stream::Encoder::new(Vec::new(), level).map_err(|_| {
+        proc_exit::sysexits::IO_ERR.with_message("Failed to initialize ZSTD encoder")
+    })?;
     std::io::copy(&mut reader, &mut encoder)
         .map_err(|_| proc_exit::sysexits::IO_ERR.with_message("Failed to compress data"))?;
     encoder
@@ -247,7 +255,7 @@ fn compress(mut reader: impl Read) -> Result<Vec<u8>, Exit> {
         .map_err(|_| proc_exit::sysexits::IO_ERR.with_message("Failed to compress data"))
 }
 
-fn gdelta_lz4(source: &[u8], target: &[u8]) -> Result<Vec<u8>, Exit> {
+fn gdelta_compress(source: &[u8], target: &[u8]) -> Result<Vec<u8>, Exit> {
     let patch = gdelta::encode(target, source)
         .map_err(|_| proc_exit::sysexits::IO_ERR.with_message("Failed to generate a patch"))?;
 
@@ -256,6 +264,7 @@ fn gdelta_lz4(source: &[u8], target: &[u8]) -> Result<Vec<u8>, Exit> {
 
 fn main() -> Result<(), Exit> {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=MULTIVERS_ZSTD_LEVEL");
 
     let out_dir = std::env::var_os("OUT_DIR").ok_or_else(|| {
         proc_exit::sysexits::SOFTWARE_ERR.with_message("Missing OUT_DIR environment variable")

@@ -63,7 +63,12 @@ impl Executable for Build<'_> {
                     .with_message(format!("Failed to create DLL file `{}`", dll_name))
             })?;
 
-            let mut decoder = lz4_flex::frame::FrameDecoder::new(dll_bytes);
+            let mut decoder = zstd::stream::Decoder::new(dll_bytes).map_err(|_| {
+                proc_exit::Code::FAILURE.with_message(format!(
+                    "Failed to initialize ZSTD decoder for DLL `{}`",
+                    dll_name
+                ))
+            })?;
 
             std::io::copy(&mut decoder, &mut dll_file).map_err(|_| {
                 proc_exit::Code::FAILURE

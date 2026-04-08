@@ -46,19 +46,20 @@ impl Build<'_> {
     /// Extracts the build into a writer
     pub fn extract_into(&self, mut output: impl Write) -> std::io::Result<()> {
         if let Some(source) = self.source {
-            let mut decoder = lz4_flex::frame::FrameDecoder::new(source.compressed);
+            let mut decoder = zstd::stream::Decoder::new(source.compressed)?;
 
-            let mut source = Vec::with_capacity(source.compressed.len());
-            decoder.read_to_end(&mut source)?;
+            let mut source_bytes = Vec::with_capacity(source.compressed.len());
+            decoder.read_to_end(&mut source_bytes)?;
 
             let mut patch = Vec::with_capacity(self.compressed.len());
-            let mut decoder = lz4_flex::frame::FrameDecoder::new(self.compressed);
+            let mut decoder = zstd::stream::Decoder::new(self.compressed)?;
             decoder.read_to_end(&mut patch)?;
 
-            let result = gdelta::decode(&patch, &source).map_err(|_| std::io::Error::other(""))?;
+            let result = gdelta::decode(&patch, &source_bytes)
+                .map_err(|_| std::io::Error::other("Failed to decode gdelta patch"))?;
             output.write_all(&result)?;
         } else {
-            let mut decoder = lz4_flex::frame::FrameDecoder::new(self.compressed);
+            let mut decoder = zstd::stream::Decoder::new(self.compressed)?;
 
             std::io::copy(&mut decoder, &mut output)?;
         }
@@ -167,7 +168,7 @@ mod tests {
     #[test]
     fn extract_into() {
         let expected_data = b"data that will be compressed";
-        let mut encoder = lz4_flex::frame::FrameEncoder::new(Vec::new());
+        let mut encoder = zstd::stream::Encoder::new(Vec::new(), 0).unwrap();
         encoder.write_all(expected_data).unwrap();
         let compressed = encoder.finish().unwrap();
 
