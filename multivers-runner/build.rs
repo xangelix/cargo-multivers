@@ -105,7 +105,7 @@ impl BuildsDescription {
             .map(|s| s.features)
             .unwrap_or_default()
             .into_iter()
-            .filter(|f| f != "x87" && f != "lahfsahf" && f != "prfchw")
+            .filter(|f| f != "x87" && f != "lahfsahf" && f != "prfchw" && f != "clflushopt")
             .collect();
         let source_features_string = source_features.join(", ");
 
@@ -134,7 +134,7 @@ impl BuildsDescription {
                 let features: Vec<String> = build
                     .features
                     .into_iter()
-                    .filter(|f| f != "x87" && f != "lahfsahf" && f != "prfchw")
+                    .filter(|f| f != "x87" && f != "lahfsahf" && f != "prfchw" && f != "clflushopt")
                     .collect();
                 let features_string = features.join(", ");
 
